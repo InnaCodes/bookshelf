@@ -1,3 +1,4 @@
+from msilib.schema import BBControl
 import os
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy  # , or_
@@ -139,10 +140,29 @@ def create_app(test_config=None):
             'books': current_books,
             'total_books': len(Book.query.all())
         })
-    # @TODO: Write a route that create a new book.
-    #        Response body keys: 'success', 'created'(id of created book), 'books' and 'total_books'
-    # TEST: When completed, you will be able to a new book using the form. Try doing so from the last page of books.
-    #       Your new book should show up immediately after you submit it at the end of the page.
+
+
+     # @TODO: Create a new endpoint or update a previous endpoint to handle searching for a team in the title
+    #        the body argument is called 'search' coming from the frontend.
+    #        If you use a different argument, make sure to update it in the frontend code.
+    #        The endpoint will need to return success value, a list of books for the search and the number of books with the search term
+    #        Response body keys: 'success', 'books' and 'total_books'
+    @app.route('/books', methods=['POST'])
+    def search_books():
+        search_term = request.get('search', None)
+        try:
+
+            if search_term:
+                selection = Book.query.order_by(Book.id).filter(Book.title.ilike('%{}%'.format(search_term))).all()
+                current_books = paginate_books(request, selection)
+
+                return jsonify({
+                    'success': True,
+                    'books': current_books,
+                    'total_books': len(selection)
+                })
+        except:
+            abort(422)
 
     @app.errorhandler(400)
     def bad_request(error):
